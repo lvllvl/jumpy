@@ -1,0 +1,21 @@
+name: Update forked repo
+
+on:
+        schedule: 
+            - cron: "0 0 * * *"
+jobs:
+    update:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Checkout out code, configure remotes
+              run: |
+                git remote add https://github.com/fishfolk/jumpy
+                git remote fetch upstream
+            - name: Merge changes
+              run: |
+                git merge upstream/main
+
+            - name: Push changes
+              run: |
+                git push origin main

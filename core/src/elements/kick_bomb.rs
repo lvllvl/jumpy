@@ -19,6 +19,12 @@ pub struct LitKickBomb {
     fuse_time: Timer,
 }
 
+#[derive(Clone, TypeUlid, Debug)]
+#[ulid = "01GQ0ZWFYZSHJPESPY9QPSTARR"]
+pub struct KickCount {
+    count: u32,
+}
+
 fn hydrate(
     game_meta: Res<CoreMetaArc>,
     mut items: CompMut<Item>,
@@ -179,6 +185,7 @@ fn update_lit_kick_bombs(
     time: Res<Time>,
     spawners: Comp<DehydrateOutOfBounds>,
     invincibles: CompMut<Invincibility>,
+    mut kicked_counts: CompMut<KickCount>, // Component to store kick counts 
 ) {
     for (entity, (kick_bomb, element_handle, spawner)) in
         entities.iter_with((&mut lit_grenades, &element_handles, &spawners))
@@ -208,11 +215,21 @@ fn update_lit_kick_bombs(
         kick_bomb.arm_delay.tick(time.delta());
 
         let mut should_explode = false;
+        let mut kicked_count = 0; // Initialize the kicked count variable
+
         // If the item is being held
         if let Some(inventory) = player_inventories
             .iter()
             .find_map(|x| x.filter(|x| x.inventory == entity))
         {
+            // Increment the kicked count
+            kicked_count += 1;
+
+            // Check if kicked_count reaches 3 
+            if kicked_count == 3 {
+                should_explode = true;
+            } 
+            
             let player = inventory.player;
             let body = bodies.get_mut(entity).unwrap();
             player_layers.get_mut(player).unwrap().fin_anim = *fin_anim;
@@ -262,6 +279,8 @@ fn update_lit_kick_bombs(
             }
         }
 
+        kicked_counts.insert( entity, KickCount { count: kicked_count }); 
+        
         // If it's time to explode
         if kick_bomb.fuse_time.finished() || should_explode {
             audio_events.play(explosion_sound.clone(), *explosion_volume);
