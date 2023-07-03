@@ -12,6 +12,7 @@ jobs:
               run: |
                 git remote add https://github.com/fishfolk/jumpy
                 git remote fetch upstream
+
             - name: Merge changes
               run: |
                 git merge upstream/main
