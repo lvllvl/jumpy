@@ -17,6 +17,7 @@ pub struct IdleKickBomb;
 pub struct LitKickBomb {
     arm_delay: Timer,
     fuse_time: Timer,
+    kicks: u32,
 }
 
 fn hydrate(
@@ -150,6 +151,7 @@ fn update_idle_kick_bombs(
                         LitKickBomb {
                             arm_delay: Timer::new(arm_delay, TimerMode::Once),
                             fuse_time: Timer::new(fuse_time, TimerMode::Once),
+                            kicks: 0,
                         },
                     );
                 },
@@ -213,6 +215,13 @@ fn update_lit_kick_bombs(
             .iter()
             .find_map(|x| x.filter(|x| x.inventory == entity))
         {
+            kick_bomb.kicks += 1;
+            // TODO: delete this print statement 
+            println!("Kicks: {}", kick_bomb.kicks ); 
+            if kick_bomb.kicks >= 3 {
+                should_explode = true;
+            }
+
             let player = inventory.player;
             let body = bodies.get_mut(entity).unwrap();
             player_layers.get_mut(player).unwrap().fin_anim = *fin_anim;
