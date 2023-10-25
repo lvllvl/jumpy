@@ -18,6 +18,7 @@ pub struct LitKickBomb {
     arm_delay: Timer,
     fuse_time: Timer,
     kicks: u32,
+    was_held_last: bool,
 }
 
 fn hydrate(
@@ -152,6 +153,7 @@ fn update_idle_kick_bombs(
                             arm_delay: Timer::new(arm_delay, TimerMode::Once),
                             fuse_time: Timer::new(fuse_time, TimerMode::Once),
                             kicks: 0,
+                            was_held_last: false,
                         },
                     );
                 },
@@ -215,11 +217,10 @@ fn update_lit_kick_bombs(
             .iter()
             .find_map(|x| x.filter(|x| x.inventory == entity))
         {
-            kick_bomb.kicks += 1;
-            // TODO: delete this print statement 
-            println!("Kicks: {}", kick_bomb.kicks ); 
-            if kick_bomb.kicks >= 3 {
-                should_explode = true;
+            if !kick_bomb.was_held_last {
+                println!("Bomb was picked up");
+                kick_bomb.was_held_last = true;
+                kick_bomb.kicks += 1;
             }
 
             let player = inventory.player;
@@ -247,6 +248,7 @@ fn update_lit_kick_bombs(
             .into_iter()
             .find(|&x| player_indexes.contains(x))
         {
+
             let body = bodies.get_mut(entity).unwrap();
             let translation = transforms.get_mut(entity).unwrap().translation;
 
@@ -269,6 +271,18 @@ fn update_lit_kick_bombs(
             } else if kick_bomb.arm_delay.finished() {
                 should_explode = true;
             }
+
+            if kick_bomb.was_held_last {
+                println!("Bomb was kicked");
+                kick_bomb.was_held_last = false;
+                if kick_bomb.kicks >= 3 /* && bombCollidesWithNotPlayer*/ {
+                    should_explode = true;
+                }
+            }
+            // when player kicks for the 3rd time, it explodes in the player's face.
+            // we want it to explode when it hits something instead.
+            // how can this be achieved? how can I detect when the bomb has collided
+            // with something solid other than the throwing player?
         }
 
         // If it's time to explode
